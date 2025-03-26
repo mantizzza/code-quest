@@ -1,2 +1,29 @@
+# === Node.js ===
+node_modules/
 .env
-/data/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+
+# === Project structure ===
+/src/players/        # Player profiles
+/data/test-dumps/    # Optional: debug exports or logs
+/backups/            # Optional: any local backup folders
+
+# === VS Code ===
+.vscode/
+*.code-workspace
+
+# === OS/system files ===
+.DS_Store
+Thumbs.db
+
+# === Logs ===
+*.log
+
+# === Misc ===
+*.swp
+*.swo
+*.bak
+*.tmp
