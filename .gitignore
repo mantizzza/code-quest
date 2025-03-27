@@ -28,4 +28,5 @@ Thumbs.db
 *.bak
 *.tmp
 
-setup.sh
+setup.shgitsetup.sh
+gitcleanup.sh
