@@ -27,3 +27,5 @@ Thumbs.db
 *.swo
 *.bak
 *.tmp
+
+setup.sh
