@@ -28,19 +28,22 @@ client.once('ready', () => {
   console.log(`✅ Logged in as ${client.user.tag}`);
 });
 
+const prefix = '!';
+
 client.on('messageCreate', async message => {
-  if (message.author.bot) return;
+  if (!message.content.startsWith(prefix) || message.author.bot) return;
 
-  const [cmd] = message.content.trim().split(/\s+/);
-  const command = client.commands.get(cmd.replace('!', ''));
+  const args = message.content.slice(prefix.length).trim().split(/\s+/);
+  const commandName = args.shift().toLowerCase();
 
-  if (command) {
-    try {
-      await command.execute(message);
-    } catch (err) {
-      console.error("🔥 Command error:", err);
-      message.channel.send('⚠️ Something went wrong executing that command.');
-    }
+  const command = client.commands.get(commandName);
+  if (!command) return;
+
+  try {
+    await command.execute(message, args);
+  } catch (err) {
+    console.error("🔥 Command error:", err);
+    message.channel.send('⚠️ Something went wrong executing that command.');
   }
 });
 

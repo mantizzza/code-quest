@@ -1,4 +1,4 @@
-const { createNewProfile, savePlayer, loadPlayer } = require('../utils/playerUtils.js');
+const { createNewProfile, loadPlayer } = require('../utils/playerUtils.js');
 
 module.exports = {
   name: 'start',
@@ -10,8 +10,7 @@ module.exports = {
       return message.channel.send(`👤 You already have a character, ${message.author.username}!`);
     }
 
-    const newProfile = createNewProfile(userId, message.author.username);
-    savePlayer(userId, newProfile);
+    createNewProfile(userId, message.author.username);
 
     message.channel.send(`✨ Welcome to Code Quest, ${message.author.username}! Your profile has been created.`);
   }

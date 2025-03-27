@@ -1,0 +1,48 @@
+{
+  "id": "490673873885331461",
+  "name": "mantizzza",
+  "level": 1,
+  "xp": 0,
+  "gold": 0,
+  "prestige": 0,
+  "location": {
+    "current": "Lush Forest",
+    "unlocked": [
+      "Lush Forest"
+    ],
+    "heat": 0
+  },
+  "stats": {
+    "base": {
+      "stamina": 10,
+      "strength": 10,
+      "agility": 10,
+      "intellect": 10,
+      "armor": 10
+    },
+    "gear": {
+      "stamina": 0,
+      "strength": 0,
+      "agility": 0,
+      "intellect": 0,
+      "armor": 0
+    },
+    "buffs": {
+      "strengthMult": 1,
+      "critChanceBonus": 0.05,
+      "critDamageBonus": 0.5
+    }
+  },
+  "combat": {
+    "currentHP": 100,
+    "maxHP": 100,
+    "currentEnemy": null,
+    "enemyHP": 0,
+    "enemyMaxHP": 0,
+    "enemyRarity": null,
+    "inBattle": false,
+    "defeatedEnemies": 0
+  },
+  "pets": [],
+  "inventory": []
+}

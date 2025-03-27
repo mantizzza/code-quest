@@ -1,51 +1,44 @@
-const { loadPlayer, savePlayer } = require('../utils/playerUtils.js');
-const { ensureEnemy } = require('../engine/enemySpawner.js');
 const { EmbedBuilder } = require('discord.js');
-const locations = require('../data/locations/locations.js');
-const enemies = require('../data/enemies/enemies.js');
+const fs = require('fs');
+const path = require('path');
 
-module.exports = {
-  name: 'profile',
-  description: 'View your profile',
-  async execute(message) {
-    const userId = message.author.id;
-    const profile = loadPlayer(userId);
-    if (!profile) {
-      return message.channel.send(`❌ You don't have a character yet! Type \`!start\` to begin.`);
-    }
+function calculateTotalStat(profile, statName, statVar = 1) {
+  const base = profile.stats.base[statName] || 0;
+  const gear = profile.stats.gear[statName] || 0;
+  const level = profile.level || 1;
+  const mult = profile.stats.buffs[`${statName}Mult`] || 1;
+  return Math.floor((base + level * statVar + gear) * mult);
+}
 
-    ensureEnemy(profile, locations, enemies);
-    savePlayer(userId, profile);
+function generateProfileEmbed(profile) {
+  const embed = new EmbedBuilder()
+    .setTitle(`🧬 ${profile.name}'s Profile`)
+    .setColor(0x00AE86)
+    .addFields(
+      { name: 'Prestige', value: `${profile.prestige}`, inline: true },
+      { name: 'Level', value: `${profile.level}`, inline: true },
+      { name: 'XP', value: `${profile.xp}`, inline: true },
+      { name: 'Gold', value: `${profile.gold}`, inline: true },
+      { name: 'Location', value: profile.location.current, inline: true },
+      { name: '\u200B', value: '\u200B' },
 
-    const stats = profile.stats;
+      { name: 'Health', value: `${profile.combat.currentHP}/${profile.combat.maxHP}`, inline: true },
+      { name: 'Current Enemy', value: profile.combat.currentEnemy ? `${profile.combat.currentEnemy} (${profile.combat.enemyHP}/${profile.combat.enemyMaxHP})` : 'None' },
 
-    const embed = new EmbedBuilder()
-      .setTitle(`🧬 ${profile.name} 'the great'`)
-      .setColor(0x00AE86)
-      .addFields(
-        { name: 'Prestige', value: `${profile.prestige}`, inline: true },
-        { name: 'Level', value: `${profile.level}`, inline: true },
-        { name: 'XP', value: `${profile.xp}`, inline: true },
-        { name: 'Gold', value: `${profile.gold}`, inline: true },
-        { name: 'Altar Level', value: `${profile.altarLevel}`, inline: true },
-        { name: 'Explorer Points', value: `${profile.explorerPoints}`, inline: true },
-        { name: 'Quests Completed', value: `${profile.questsCompleted}`, inline: true },
-        { name: '\u200B', value: '\u200B' },
-        { name: 'Health', value: `${profile.combat.currentHP}/${profile.combat.maxHP}`, inline: true },
-        { name: 'Current Enemy', value: `${profile.combat.currentEnemy}: ${profile.combat.enemyHP}/${profile.combat.enemyMaxHP}`, inline: true },
-        { name: '\u200B', value: '\u200B' },
-        { name: '🛡️ Stats', value: '\u200B' },
-        { name: 'Stamina', value: `${stats.stamina}`, inline: true },
-        { name: 'Strength', value: `${stats.strength}`, inline: true },
-        { name: 'Agility', value: `${stats.agility}`, inline: true },
-        { name: 'Intellect', value: `${stats.intellect}`, inline: true },
-        { name: 'Armor', value: `${stats.armor}`, inline: true },
-        { name: 'Strength Bonus', value: `${(stats.strengthBonus * 100).toFixed(1)}%`, inline: true },
-        { name: 'Spell Damage Bonus', value: `${(stats.spellDamageBonus * 100).toFixed(1)}%`, inline: true },
-        { name: 'Crit Chance', value: `${(stats.critChance * 100).toFixed(1)}%`, inline: true },
-        { name: 'Crit Damage', value: `${(stats.critDamage * 100).toFixed(1)}%`, inline: true }
-      );
+      { name: '\u200B', value: '\u200B' },
+      { name: '🛡️ Stats', value: '\u200B' },
 
-    message.channel.send({ embeds: [embed] });
-  }
-};
+      { name: 'Stamina', value: `${calculateTotalStat(profile, 'stamina')}`, inline: true },
+      { name: 'Strength', value: `${calculateTotalStat(profile, 'strength')}`, inline: true },
+      { name: 'Agility', value: `${calculateTotalStat(profile, 'agility')}`, inline: true },
+      { name: 'Intellect', value: `${calculateTotalStat(profile, 'intellect')}`, inline: true },
+      { name: 'Armor', value: `${calculateTotalStat(profile, 'armor')}`, inline: true },
+      { name: 'Crit Chance', value: `${(profile.stats.buffs.critChanceBonus * 100).toFixed(1)}%`, inline: true },
+      { name: 'Crit Damage', value: `${(profile.stats.buffs.critDamageBonus * 100).toFixed(1)}%`, inline: true }
+    )
+    .setFooter({ text: `Type !start to begin if you haven't already.` });
+
+  return embed;
+}
+
+module.exports = { generateProfileEmbed };
