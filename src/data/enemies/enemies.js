@@ -1,20 +1,20 @@
-const { generateStats } = require('../../utils/scaling');
+const fs = require('fs');
+const path = require('path');
 
-module.exports = {
-  LushForest: {
-    WildHog: {
-      base: {
-        name: "Wild Hog",
-        ...generateStats(4)
-      },
-      elite: {
-        name: "Snarlhide",
-        ...generateStats(6, 'elite', 'spiky')
-      },
-      boss: {
-        name: "Rootrot, the Festering Boar",
-        ...generateStats(8, 'boss', null, ['spiky', 'diseaseAura'])
-      }
+const enemiesDir = __dirname;
+const allLocationEnemies = {};
+
+fs.readdirSync(enemiesDir).forEach(file => {
+  if (
+    file !== 'enemies.js' &&
+    file !== 'raidEnemies.js' &&
+    file.endsWith('.js')
+  ) {
+    const enemyData = require(path.join(enemiesDir, file));
+    if (enemyData?.location && enemyData?.enemies) {
+      allLocationEnemies[enemyData.location] = enemyData.enemies;
     }
   }
-};
+});
+
+module.exports = allLocationEnemies;

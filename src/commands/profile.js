@@ -1,44 +1,23 @@
-const { EmbedBuilder } = require('discord.js');
-const fs = require('fs');
-const path = require('path');
 
-function calculateTotalStat(profile, statName, statVar = 1) {
-  const base = profile.stats.base[statName] || 0;
-  const gear = profile.stats.gear[statName] || 0;
-  const level = profile.level || 1;
-  const mult = profile.stats.buffs[`${statName}Mult`] || 1;
-  return Math.floor((base + level * statVar + gear) * mult);
-}
+const { loadPlayer } = require('../utils/playerUtils.js');
+const { generateProfileEmbed } = require('../embeds/profile.js');
 
-function generateProfileEmbed(profile) {
-  const embed = new EmbedBuilder()
-    .setTitle(`🧬 ${profile.name}'s Profile`)
-    .setColor(0x00AE86)
-    .addFields(
-      { name: 'Prestige', value: `${profile.prestige}`, inline: true },
-      { name: 'Level', value: `${profile.level}`, inline: true },
-      { name: 'XP', value: `${profile.xp}`, inline: true },
-      { name: 'Gold', value: `${profile.gold}`, inline: true },
-      { name: 'Location', value: profile.location.current, inline: true },
-      { name: '\u200B', value: '\u200B' },
+module.exports = {
+  name: 'profile',
+  description: 'View your character profile',
+  async execute(message) {
+    const userId = message.author.id;
+    const profile = loadPlayer(userId);
 
-      { name: 'Health', value: `${profile.combat.currentHP}/${profile.combat.maxHP}`, inline: true },
-      { name: 'Current Enemy', value: profile.combat.currentEnemy ? `${profile.combat.currentEnemy} (${profile.combat.enemyHP}/${profile.combat.enemyMaxHP})` : 'None' },
+    if (!profile) {
+      return message.channel.send(`❌ You don't have a character yet. Type \`!start\` to begin.`);
+    }
 
-      { name: '\u200B', value: '\u200B' },
-      { name: '🛡️ Stats', value: '\u200B' },
+    const xpDisplay = profile.levelXP
+      ? `${profile.levelXP.current} / ${profile.levelXP.needed}`
+      : `${profile.xp || 0} / ???`;
 
-      { name: 'Stamina', value: `${calculateTotalStat(profile, 'stamina')}`, inline: true },
-      { name: 'Strength', value: `${calculateTotalStat(profile, 'strength')}`, inline: true },
-      { name: 'Agility', value: `${calculateTotalStat(profile, 'agility')}`, inline: true },
-      { name: 'Intellect', value: `${calculateTotalStat(profile, 'intellect')}`, inline: true },
-      { name: 'Armor', value: `${calculateTotalStat(profile, 'armor')}`, inline: true },
-      { name: 'Crit Chance', value: `${(profile.stats.buffs.critChanceBonus * 100).toFixed(1)}%`, inline: true },
-      { name: 'Crit Damage', value: `${(profile.stats.buffs.critDamageBonus * 100).toFixed(1)}%`, inline: true }
-    )
-    .setFooter({ text: `Type !start to begin if you haven't already.` });
-
-  return embed;
-}
-
-module.exports = { generateProfileEmbed };
+    const embed = generateProfileEmbed(profile, xpDisplay);
+    message.channel.send({ embeds: [embed] });
+  }
+};

@@ -10,6 +10,7 @@ package-lock.json
 /src/players/        # Player profiles
 /data/test-dumps/    # Optional: debug exports or logs
 /backups/            # Optional: any local backup folders
+/src/commands/devCommands/ # Hides dev commands
 
 # === VS Code ===
 .vscode/

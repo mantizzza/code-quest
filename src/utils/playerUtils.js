@@ -1,10 +1,12 @@
+
 const fs = require('fs');
 const path = require('path');
 const { baseStats } = require('../data/playerData/baseStats');
+const { getXPForLevel } = require('../utils/levelUtils');
+const DEV_IDS = ['490673873885331461'];
 
 const playersDir = path.join(__dirname, '..', 'players');
 
-// Ensure the directory exists
 if (!fs.existsSync(playersDir)) {
   fs.mkdirSync(playersDir, { recursive: true });
 }
@@ -20,7 +22,22 @@ function savePlayer(userId, data) {
 function loadPlayer(userId) {
   const filePath = getPlayerPath(userId);
   if (!fs.existsSync(filePath)) return null;
-  return JSON.parse(fs.readFileSync(filePath));
+
+  const profile = JSON.parse(fs.readFileSync(filePath));
+
+  // Patch old profiles to support levelXP
+  if (!profile.levelXP) {
+    profile.levelXP = {
+      current: profile.xp || 0,
+      needed: getXPForLevel(profile.level || 1)
+    };
+  }
+   // 🧠 Auto-flag devs
+   if (DEV_IDS.includes(userId)) {
+    profile.isDev = true;
+  }
+
+  return profile;
 }
 
 function createNewProfile(userId, username) {
@@ -31,6 +48,13 @@ function createNewProfile(userId, username) {
     xp: 0,
     gold: 0,
     prestige: 0,
+    isDev: DEV_IDS.includes(userId),
+    isMod: false,
+
+    levelXP: {
+      current: 0,
+      needed: getXPForLevel(1)
+    },
 
     location: {
       current: 'Lush Forest',
@@ -55,8 +79,8 @@ function createNewProfile(userId, username) {
     },
 
     combat: {
-      currentHP: 100, // placeholder until calculated
-      maxHP: 100,     // placeholder until calculated
+      currentHP: 100,
+      maxHP: 100,
       currentEnemy: null,
       enemyHP: 0,
       enemyMaxHP: 0,
@@ -69,14 +93,32 @@ function createNewProfile(userId, username) {
     inventory: []
   };
 
+
+
   const savePath = path.join(__dirname, '../players', `${userId}.json`);
   fs.writeFileSync(savePath, JSON.stringify(profile, null, 2));
   return profile;
+}
+
+function hasAccess(profile, type) {
+  if (!profile) return false;
+
+  switch (type) {
+    case 'dev':
+      return profile.isDev === true;
+    case 'mod':
+      return profile.isMod === true || profile.isDev === true; // devs get mod powers too
+    case 'player':
+      return true;
+    default:
+      return false;
+  }
 }
 
 module.exports = { 
   createNewProfile,
   getPlayerPath,
   savePlayer,
-  loadPlayer
- };
+  loadPlayer,
+  hasAccess
+};

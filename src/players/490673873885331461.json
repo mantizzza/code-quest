@@ -1,16 +1,22 @@
 {
   "id": "490673873885331461",
   "name": "mantizzza",
-  "level": 1,
+  "level": 2,
   "xp": 0,
-  "gold": 0,
+  "gold": 48,
   "prestige": 0,
+  "isDev": true,
+  "isMod": false,
+  "levelXP": {
+    "current": 10,
+    "needed": 141
+  },
   "location": {
     "current": "Lush Forest",
     "unlocked": [
       "Lush Forest"
     ],
-    "heat": 0
+    "heat": 4
   },
   "stats": {
     "base": {
@@ -34,14 +40,36 @@
     }
   },
   "combat": {
-    "currentHP": 100,
+    "currentHP": 45,
     "maxHP": 100,
-    "currentEnemy": null,
-    "enemyHP": 0,
-    "enemyMaxHP": 0,
+    "currentEnemy": {
+      "name": "Sapspitter",
+      "level": 5,
+      "rarity": "base",
+      "stats": {
+        "level": 5,
+        "maxHP": 25,
+        "attack": 10,
+        "agility": 15,
+        "critChance": 0.05,
+        "goldDrop": [
+          15,
+          25
+        ],
+        "xpDrop": 20,
+        "trait": null,
+        "traits": []
+      },
+      "loot": [
+        "Sticky Resin",
+        "Sapling Fang"
+      ]
+    },
+    "enemyHP": 12,
+    "enemyMaxHP": 25,
     "enemyRarity": null,
-    "inBattle": false,
-    "defeatedEnemies": 0
+    "inBattle": true,
+    "defeatedEnemies": 4
   },
   "pets": [],
   "inventory": []
