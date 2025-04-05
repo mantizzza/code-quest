@@ -1,30 +1,30 @@
 {
   "id": "490673873885331461",
   "name": "mantizzza",
-  "level": 2,
+  "level": 4,
   "xp": 0,
-  "gold": 48,
+  "gold": 372,
   "prestige": 0,
   "isDev": true,
   "isMod": false,
   "levelXP": {
-    "current": 10,
-    "needed": 141
+    "current": 354,
+    "needed": 400
   },
   "location": {
     "current": "Lush Forest",
     "unlocked": [
       "Lush Forest"
     ],
-    "heat": 4
+    "heat": 2
   },
   "stats": {
     "base": {
-      "stamina": 10,
-      "strength": 10,
-      "agility": 10,
-      "intellect": 10,
-      "armor": 10
+      "stamina": 5,
+      "strength": 5,
+      "agility": 5,
+      "intellect": 5,
+      "armor": 5
     },
     "gear": {
       "stamina": 0,
@@ -40,37 +40,54 @@
     }
   },
   "combat": {
-    "currentHP": 45,
-    "maxHP": 100,
+    "currentHP": 63,
+    "maxHP": 140,
     "currentEnemy": {
-      "name": "Sapspitter",
+      "name": "Fernfang",
       "level": 5,
       "rarity": "base",
       "stats": {
         "level": 5,
-        "maxHP": 25,
-        "attack": 10,
-        "agility": 15,
+        "maxHP": 90,
+        "attack": 15,
+        "agility": 10,
         "critChance": 0.05,
         "goldDrop": [
           15,
           25
         ],
-        "xpDrop": 20,
-        "trait": null,
+        "xpDrop": 45,
         "traits": []
       },
-      "loot": [
-        "Sticky Resin",
-        "Sapling Fang"
-      ]
+      "loot": [],
+      "image": "https://media.discordapp.net/attachments/1355442332186574961/1355840464963637288/ChatGPT_Image_Mar_29_2025_11_08_18_PM.png?ex=67ea6455&is=67e912d5&hm=78e5af86ed002ec749e2e87a6fe95f72d553d79484a848334b415e200802f99c&=&format=webp&quality=lossless&width=747&height=747"
     },
-    "enemyHP": 12,
-    "enemyMaxHP": 25,
+    "enemyHP": 30,
+    "enemyMaxHP": 90,
     "enemyRarity": null,
     "inBattle": true,
-    "defeatedEnemies": 4
+    "defeatedEnemies": 22
   },
   "pets": [],
-  "inventory": []
+  "inventory": {
+    "power-pot": 3,
+    "heat-preserver": 1,
+    "mossback-tunic": 1,
+    "sproutwood-dagger": 3,
+    "agi-pot": 1,
+    "heal-pot": 1,
+    "thornwoven-bracers": 2,
+    "fernleaf-boots": 1,
+    "wildstep-sandals": 1,
+    "iron-pants": 1,
+    "barkhide-vest": 1,
+    "woodland-hood": 1
+  },
+  "equipped": {
+    "head": "camouflaged-crown",
+    "chest": "stoneskin-breastplate",
+    "legs": "bramble-pants",
+    "feet": "wildstep-sandals",
+    "weapon": "howlingwood-bow"
+  }
 }

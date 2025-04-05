@@ -20,6 +20,9 @@ function walkSync(dir, fileList = [], isDev = false) {
   return fileList;
 }
 
+
+
+
 function loadCommands(client, baseCommandPath, isDev = false) {
   const commandFiles = walkSync(baseCommandPath, [], isDev);
   client.commands = new Collection();
@@ -32,6 +35,12 @@ function loadCommands(client, baseCommandPath, isDev = false) {
     }
 
     client.commands.set(command.name, command);
+    // handles aliases?
+      client.commands.set(command.name, command);
+      if (command.aliases) {
+  command.aliases.forEach(alias => client.commands.set(alias, command));
+}
+
   }
 
   console.log(`✅ Loaded ${client.commands.size} commands`);

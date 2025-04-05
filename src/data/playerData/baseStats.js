@@ -1,10 +1,13 @@
-module.exports = {
-    baseStats: {
-      stamina: 10,
-      strength: 10,
-      agility: 10,
-      intellect: 10,
-      armor: 10
-    }
-  };
-  
+//determines what the stats start at level 1
+const defaultBase = 5;
+
+//allocates the default to each stat
+const baseStats = {
+  stamina: defaultBase,
+  strength: defaultBase,
+  agility: defaultBase,
+  intellect: defaultBase,
+  armor: defaultBase,
+};
+
+module.exports = { baseStats };

@@ -1,66 +1,54 @@
 const { EmbedBuilder } = require('discord.js');
+const { calculateTotalStat, getMaxHP, getGearStats } = require('../utils/playerUtils');
 
-function calculateTotalStat(profile, statName, statVar = 1) {
-  const base = profile.stats.base[statName] || 0;
-  const gear = profile.stats.gear[statName] || 0;
-  const level = profile.level || 1;
-  const mult = profile.stats.buffs[`${statName}Mult`] || 1;
-  return {
-    base,
-    gear,
-    level,
-    mult,
-    total: Math.floor((base + (level - 1) * statVar + gear) * mult)
+
+function generateProfileEmbed(profile) {
+  const stats = ['strength', 'stamina', 'agility', 'intellect', 'armor'];
+  const statIcons = {
+    strength: '💪',
+    stamina: '❤️',
+    agility: '⚡',
+    intellect: '🧠',
+    armor: '🛡️'
   };
-}
 
-function generateProfileEmbed(profile, xpDisplayOverride = null) {
+  const critChance = ((profile.stats.buffs?.critChanceBonus ?? 0.05) * 100).toFixed(1);
+  const critDamage = ((profile.stats.buffs?.critDamageBonus ?? 0.5) * 100).toFixed(0);
+  const maxHP = getMaxHP(profile);
+
   const embed = new EmbedBuilder()
     .setTitle(`${profile.name}'s Profile`)
-    .setColor(0x0099ff)
     .addFields(
-      { name: 'Prestige', value: `${profile.prestige || 0}`, inline: true },
-      { name: 'Level', value: `${profile.level}`, inline: true },
-      { name: 'XP', value: xpDisplayOverride || `${profile.levelXP?.current || 0} / ${profile.levelXP?.needed || '?'}`, inline: true },
-      { name: 'Gold', value: `${profile.gold}`, inline: true },
-      { name: 'Location', value: `${profile.location?.current || 'Unknown'}`, inline: true },
-      { name: 'Heat', value: `${profile.location?.heat || 0}`, inline: true },
-      { name: 'Health', value: `${profile.combat.currentHP}/${profile.combat.maxHP}`, inline: true },
-      { name: 'Current Enemy', value: `${profile.combat.currentEnemy?.name || 'None'} (${profile.combat.enemyHP}/${profile.combat.enemyMaxHP})`, inline: true }
+      { name: '🧪 Level / XP', value: `Lv. ${profile.level} | ${profile.levelXP.current} / ${profile.levelXP.needed}`, inline: true },
+      { name: '💰 Gold', value: `${profile.gold}`, inline: true },
+      { name: '🔥 Heat', value: `${profile.location.heat}`, inline: true },
+      { name: '📍 Location', value: `${profile.location.current}`, inline: true },
+      { name: '🏆 Prestige', value: `${profile.prestige}`, inline: true },
+      { name: '❤️ HP', value: `${profile.combat.currentHP} / ${maxHP}`, inline: true },
+      { name: '🎯 Crit Chance', value: `${critChance}%`, inline: true },
+      { name: '💥 Crit Damage', value: `${critDamage}%`, inline: true }
     );
 
-  const statDisplay = [];
-  const buffDisplay = [];
+  if (profile.combat.currentEnemy) {
+    embed.addFields({
+      name: '⚔️ Current Enemy',
+      value: `${profile.combat.currentEnemy.name} (${profile.combat.enemyHP} / ${profile.combat.enemyMaxHP}) [${profile.combat.currentEnemy.rarity || 'Normal'}]`
+    });
+  }
+  const gearStats = getGearStats(profile);
+  
 
-  const playerStatVars = {
-    strength: 1,
-    stamina: 1,
-    agility: 1,
-    intellect: 1,
-    armor: 1
-  };
-
-  Object.keys(playerStatVars).forEach(stat => {
-    const { base, gear, mult, total } = calculateTotalStat(profile, stat, playerStatVars[stat]);
-    const display = `**${capitalize(stat)}**: (${base} + :tophat: ${gear}) × :sparkles: ${mult.toFixed(2)} = **${total}**`;
-    statDisplay.push(display);
+  const statDisplay = stats.map(stat => {
+    const base = profile.stats.base[stat] || 0;
+    const gear = gearStats[stat] || 0; 
+    const mult = profile.stats.buffs?.[`${stat}Mult`] ?? 1;
+    const total = calculateTotalStat(profile, stat);
+    return `${statIcons[stat]} **${stat.charAt(0).toUpperCase() + stat.slice(1)}**: ${total} (Base: ${base}, Gear: ${gear}, ×${mult})`;
   });
 
-  const critChance = Math.round((profile.stats.buffs.critChanceBonus || 0) * 100);
-  const critDamage = Math.round((profile.stats.buffs.critDamageBonus || 0.5) * 100);
-  buffDisplay.push(`Crit Chance: +${critChance}%`);
-  buffDisplay.push(`Crit Damage: +${critDamage}%`);
-
-  embed.addFields(
-    { name: '📊 Stats', value: statDisplay.join('\n') },
-    { name: '🎯 Buffs', value: buffDisplay.join('\n') }
-  );
+  embed.addFields({ name: '📊 Stats', value: statDisplay.join('\n') });
 
   return embed;
-}
-
-function capitalize(str) {
-  return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
 module.exports = { generateProfileEmbed };

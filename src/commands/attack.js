@@ -1,8 +1,13 @@
-
+const { MessageFlags } = require('discord.js');
 const { loadPlayer, savePlayer } = require('../utils/playerUtils.js');
 const { ensureEnemy } = require('../engine/enemySpawner.js');
 const { addXP } = require('../utils/levelUtils.js');
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const buttons = require('../components/buttons');
+const { calculateTotalStat } = require('../utils/playerUtils.js');
+const { EmbedBuilder } = require('discord.js');
+const { getLoot } = require('../engine/lootSpawner.js');
+const { addItemToInventory, itemDisplay, rarityEmojis, locationEmojis } = require('../utils/itemUtils.js'); // or wherever it's defined
+
 
 module.exports = {
   name: 'attack',
@@ -10,21 +15,29 @@ module.exports = {
   async execute(interaction) {
     const userId = interaction.user?.id || interaction.author?.id;
     const profile = loadPlayer(userId);
+    
 
     if (!profile) {
-      return interaction.reply({ content: "❌ You don't have a character. Use `!start` to begin.", ephemeral: true });
+      return interaction.reply({
+         content: "❌ You don't have a character. Use `!start` to begin.",
+         flags: MessageFlags.Ephemeral });
     }
 
     if (profile.combat.currentHP <= 0) {
       profile.location.heat = 0;
       savePlayer(userId, profile);
-      return interaction.reply({ content: "💀 You are dead and cannot attack! Use `!revive` first.", ephemeral: true });
+      return interaction.reply({
+         content: "💀 You are dead and cannot attack! Click **:heart:Revive** to get back in the fight!",
+         components: buttons.reviveOnly,
+         flags: MessageFlags.Ephemeral });
     }
 
     ensureEnemy(profile);
     const enemy = profile.combat.currentEnemy;
     if (!enemy) {
-      return interaction.reply({ content: "❌ Could not find your current enemy.", ephemeral: true });
+      return interaction.reply({
+         content: "❌ Could not find your current enemy.",
+         flags: MessageFlags.Ephemeral});
     }
 
     // Ensure fallback agility for enemy
@@ -42,18 +55,9 @@ module.exports = {
     const embed = new EmbedBuilder()
       .setTitle(`⚔️ Combat vs ${enemy.name}`)
       .setColor(isCrit ? 0xff0000 : 0x00aa00)
-      .setThumbnail(enemy.image || null);
+      .setThumbnail(profile.image || null);
 
-    const row = new ActionRowBuilder().addComponents(
-      new ButtonBuilder()
-        .setCustomId('attack_button')
-        .setLabel('Attack Again')
-        .setStyle(ButtonStyle.Primary),
-      new ButtonBuilder()
-        .setCustomId('profile_button')
-        .setLabel('View Profile')
-        .setStyle(ButtonStyle.Secondary)
-    );
+
 
     let combatLog = [];
 
@@ -64,7 +68,7 @@ module.exports = {
       combatLog.push({ name: 'You attack!', value: `${isCrit ? '💥 **Critical!** ' : ''}You hit **${enemy.name}** for **${playerDamage}** damage.` });
 
       if (profile.combat.enemyHP <= 0) {
-        return finishVictory(interaction, profile, enemy, combatLog, embed);
+        return finishVictory(interaction, profile, enemy, combatLog, embed, buttons);
       }
 
       profile.combat.currentHP -= enemyDamage;
@@ -82,7 +86,7 @@ module.exports = {
         savePlayer(userId, profile);
         embed.addFields(...combatLog);
         embed.addFields({ name: '💀 You Died', value: 'You were slain before striking back!' });
-        return interaction.reply({ embeds: [embed] });
+        return interaction.reply({ embeds: [embed], components: buttons.buttons });
       }
 
       profile.combat.enemyHP -= playerDamage;
@@ -90,7 +94,7 @@ module.exports = {
       combatLog.push({ name: 'You counterattack!', value: `${isCrit ? '💥 **Critical!** ' : ''}You hit **${enemy.name}** for **${playerDamage}** damage.` });
 
       if (profile.combat.enemyHP <= 0) {
-        return finishVictory(interaction, profile, enemy, combatLog, embed);
+        return finishVictory(interaction, profile, enemy, combatLog, embed, buttons);
       }
     }
 
@@ -100,41 +104,67 @@ module.exports = {
     );
 
     if (enemy.stats?.traits?.length) {
-      embed.addFields({ name: 'Enemy Traits', value: enemy.stats.traits.join(', ') });
+      embed.addFields({ 
+        name: 'Enemy Traits', 
+        value: enemy.stats.traits.join(', ') });
     }
 
     embed.addFields(...combatLog);
+    embed.setImage(enemy.image);
     savePlayer(userId, profile);
-    return interaction.reply({ embeds: [embed], components: [row] });
+    return interaction.reply({ embeds: [embed], components: buttons.buttons });
   }
 };
 
-function finishVictory(interaction, profile, enemy, combatLog, embed) {
+function finishVictory(interaction, profile, enemy, combatLog, embed, buttons) {
   const userId = interaction.user?.id || interaction.author?.id;
   const xpGain = enemy.stats.xpDrop || 10;
   const goldRange = enemy.stats.goldDrop || [3, 5];
   const goldGain = Math.floor(Math.random() * (goldRange[1] - goldRange[0] + 1)) + goldRange[0];
-
+  
+  // Add XP and gold
   const { leveledUp, newLevel } = addXP(profile, xpGain);
   profile.gold += goldGain;
   profile.combat.defeatedEnemies += 1;
+ 
+  profile.location.heat = (profile.location.heat || 0) + 1;
+
+  // ======= LOOT GENERATION =======
+  const loot = getLoot(profile); // Require this from your lootUtils.js
+
+  for (const drop of loot) {
+    const quantity = drop.quantity ?? 1;
+    addItemToInventory(profile, drop.id, quantity); // Ensure this handles all item types
+  }
+
+  const formatItemName = (id) => id.split('-').map(word => word[0].toUpperCase() + word.slice(1)).join(' ');
+
+  const lootText = loot.length === 0
+  ? 'None'
+  : loot.map(drop => itemDisplay(drop)).join('\n');
+
+
+  // ======= BUILD COMBAT LOG =======
+  combatLog.push(
+    { name: '🏆 Victory!<:veryNiceMantizzza:1355249551614804131>', value: `You defeated **${enemy.name}** and earned **${xpGain} XP** and **${goldGain} gold**.` },
+    { name: '📦 Loot Acquired', value: lootText },
+    { name: '📈 XP Progress', value: `${profile.levelXP.current} / ${profile.levelXP.needed} XP` },
+    { name: 'Your HP', value: `${profile.combat.currentHP}/${profile.combat.maxHP}`, inline: true },
+    { name: 'Enemy HP', value: `0/${enemy.stats.maxHP || 1}`, inline: true },
+  );
+
   profile.combat.currentEnemy = null;
   profile.combat.enemyHP = 0;
   profile.combat.enemyMaxHP = 0;
   profile.combat.inBattle = false;
-  profile.location.heat = (profile.location.heat || 0) + 1;
-
-  combatLog.push(
-    { name: '🏆 Victory!<:veryNiceMantizzza:1355249551614804131>', value: `You defeated **${enemy.name}** and earned **${xpGain} XP** and **${goldGain} gold**.` },
-    { name: '📈 XP Progress', value: `${profile.levelXP.current} / ${profile.levelXP.needed} XP` },
-    { name: 'Your HP', value: `${profile.combat.currentHP}/${profile.combat.maxHP}`, inline: true },
-    { name: 'Enemy HP', value: `0/${enemy.stats.hp || 1}`, inline: true }
-  );
 
   embed.addFields(...combatLog);
+  embed.setImage(enemy.image);
   savePlayer(userId, profile);
-  return interaction.reply({ embeds: [embed] });
+
+  return interaction.reply({ embeds: [embed], components: buttons.buttons });
 }
+
 
 function applyVariance(value, variance = 0.1) {
   const range = value * variance;
@@ -144,7 +174,7 @@ function applyVariance(value, variance = 0.1) {
 function calculatePlayerDamage(profile, isCrit = false) {
   const base = calculateTotalStat(profile, 'strength');
   const critMult = isCrit ? (1 + (profile.stats.buffs.critDamageBonus || 0.5)) : 1;
-  return Math.floor(base * 1.2 * critMult);
+  return Math.floor(base * 3 * critMult);
 }
 
 function getCritChance(profile) {
@@ -157,19 +187,4 @@ function calculateEnemyDamage(enemy) {
   return Math.floor(enemy.stats.attack || 3);
 }
 
-function calculateTotalStat(profile, statName) {
-  const base = profile.stats.base[statName] || 0;
-  const gear = profile.stats.gear[statName] || 0;
-  const level = profile.level || 1;
-  const mult = profile.stats.buffs[`${statName}Mult`] || 1;
 
-  const statVars = {
-    strength: 1,
-    stamina: 1,
-    agility: 1,
-    intellect: 1
-  };
-
-  const scale = statVars[statName] || 1;
-  return Math.floor((base + (level - 1) * scale + gear) * mult);
-}
